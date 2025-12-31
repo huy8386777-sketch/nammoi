@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoàng Chúc Mừng Năm Mới 2026</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;900&family=Dancing+Script:wght@700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* --- CẤU HÌNH GIAO DIỆN --- */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000000;
+            /* Nền đen tuyền */
+            font-family: 'Montserrat', sans-serif;
+            color: #fff;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        #content-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 2;
+            pointer-events: none;
+            width: 100%;
+        }
+
+        /* Label đếm ngược bình thường */
+        #label {
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #aaddff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 150, 255, 0.8);
+            transition: all 0.5s ease;
+        }
+
+        /* --- STYLE ĐẶC BIỆT CHO DÒNG CHỮ "HOÀNG..." (Hiện khi qua năm mới) --- */
+        .hoang-special-text {
+            font-size: 3.5rem !important;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+
+            /* Hiệu ứng màu cầu vồng chuyển động */
+            background: linear-gradient(45deg,
+                    #FF0000, #FF7300, #FFFB00, #48FF00,
+                    #00FFD5, #002BFF, #7A00FF, #FF00C8, #FF0000);
+            background-size: 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            /* Animation chạy màu và nhịp tim */
+            animation: glowing-rainbow 10s linear infinite, heartbeat 1.5s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes glowing-rainbow {
+            0% {
+                background-position: 0 0;
+            }
+
+            50% {
+                background-position: 400% 0;
+            }
+
+            100% {
+                background-position: 0 0;
+            }
+        }
+
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        h1 {
+            font-size: 8vw;
+            margin: 0;
+            line-height: 1;
+            color: #fff;
+            text-shadow: 0 0 10px #fff, 0 0 20px #ff00de, 0 0 40px #ff00de;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        #wish-container {
+            margin-top: 30px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            color: #FFD700;
+            text-shadow: 0 0 10px #e6b800;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 3s ease-out;
+            line-height: 1.5;
+        }
+
+        .show-wish {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        @keyframes pulse {
+            0% {
+                text-shadow: 0 0 10px #fff, 0 0 20px #ff00de;
+            }
+
+            100% {
+                text-shadow: 0 0 20px #fff, 0 0 40px #00ffff;
+            }
+        }
+
+        .gold-mode h1 {
+            color: #fff;
+            text-shadow: 0 0 10px #fff, 0 0 30px #FFD700, 0 0 60px #FFD700;
+            animation: none;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 18vw;
+            }
+
+            .hoang-special-text {
+                font-size: 1.5rem !important;
+            }
+
+            #wish-container {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <div id="content-container">
+        <div id="label">Sắp bước sang năm 2026</div>
+        <h1 id="timer">00:00:00</h1>
+        <div id="wish-container"></div>
+    </div>
+
+    <script>
+        // --- CẤU HÌNH THỜI GIAN CHÍNH THỨC: 00:00:00 ngày 1/1/2026 ---
+        const targetDate = new Date("January 1, 2026 00:00:00").getTime();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const timerEl = document.getElementById('timer');
+        const labelEl = document.getElementById('label');
+        const wishEl = document.getElementById('wish-container');
+        const container = document.getElementById('content-container');
+
+        let cw = window.innerWidth;
+        let ch = window.innerHeight;
+        let fireworks = [];
+        let particles = [];
+        let hue = 120;
+        let limiterTick = 0;
+        let timerInterval;
+        let isNewYear = false;
+
+        canvas.width = cw;
+        canvas.height = ch;
+
+        window.addEventListener('resize', () => {
+            cw = window.innerWidth;
+            ch = window.innerHeight;
+            canvas.width = cw;
+            canvas.height = ch;
+        });
+
+        function random(min, max) { return Math.random() * (max - min) + min; }
+        function calculateDistance(p1x, p1y, p2x, p2y) { return Math.sqrt(Math.pow(p1x - p2x, 2) + Math.pow(p1y - p2y, 2)); }
+
+        class Firework {
+            constructor(sx, sy, tx, ty) {
+                this.x = sx; this.y = sy;
+                this.sx = sx; this.sy = sy;
+                this.tx = tx; this.ty = ty;
+                this.distanceToTarget = calculateDistance(sx, sy, tx, ty);
+                this.distanceTraveled = 0;
+                this.coordinates = [];
+                this.coordinateCount = 3;
+                while (this.coordinateCount--) { this.coordinates.push([this.x, this.y]); }
+                this.angle = Math.atan2(ty - sy, tx - sx);
+                this.speed = 2;
+                this.acceleration = 1.05;
+                this.brightness = random(60, 80);
+                this.targetRadius = 1;
+            }
+            update(index) {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                if (this.targetRadius < 8) this.targetRadius += 0.3; else this.targetRadius = 1;
+                this.speed *= this.acceleration;
+                let vx = Math.cos(this.angle) * this.speed;
+                let vy = Math.sin(this.angle) * this.speed;
+                this.distanceTraveled = calculateDistance(this.sx, this.sy, this.x + vx, this.y + vy);
+                if (this.distanceTraveled >= this.distanceToTarget) {
+                    createParticles(this.tx, this.ty);
+                    fireworks.splice(index, 1);
+                } else { this.x += vx; this.y += vy; }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+                ctx.lineTo(this.x, this.y);
+                ctx.strokeStyle = `hsl(${hue}, 100%, ${this.brightness}%)`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.coordinates = [];
+                this.coordinateCount = 8;
+                while (this.coordinateCount--) { this.coordinates.push([this.x, this.y]); }
+                this.angle = random(0, Math.PI * 2);
+                this.speed = random(1, 15);
+                this.friction = 0.95;
+                this.gravity = 1;
+                this.hue = random(hue - 50, hue + 50);
+                this.brightness = random(60, 100);
+                this.alpha = 1;
+                this.decay = random(0.01, 0.02);
+            }
+            update(index) {
+                this.coordinates.pop();
+                this.coordinates.unshift([this.x, this.y]);
+                this.speed *= this.friction;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                this.alpha -= this.decay;
+                if (Math.random() < 0.1) this.brightness = 100; else this.brightness = random(50, 80);
+                if (this.alpha <= this.decay) particles.splice(index, 1);
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+                ctx.lineTo(this.x, this.y);
+                ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+        }
+
+        function createParticles(x, y) {
+            let particleCount = 80;
+            while (particleCount--) { particles.push(new Particle(x, y)); }
+        }
+
+        function loop() {
+            requestAnimationFrame(loop);
+            hue = random(0, 360);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, cw, ch);
+            ctx.globalCompositeOperation = 'lighter';
+
+            let i = fireworks.length;
+            while (i--) { fireworks[i].draw(); fireworks[i].update(i); }
+            let j = particles.length;
+            while (j--) { particles[j].draw(); particles[j].update(j); }
+
+            if (isNewYear) {
+                if (limiterTick >= 2) {
+                    fireworks.push(new Firework(cw / 2, ch, random(0, cw), random(0, ch / 2)));
+                    if (Math.random() < 0.3) {
+                        fireworks.push(new Firework(cw * 0.2, ch, random(0, cw / 2), random(0, ch / 2)));
+                        fireworks.push(new Firework(cw * 0.8, ch, random(cw / 2, cw), random(0, ch / 2)));
+                    }
+                    limiterTick = 0;
+                } else { limiterTick++; }
+            } else {
+                if (limiterTick >= 40) {
+                    fireworks.push(new Firework(cw / 2, ch, random(cw / 3, cw * 2 / 3), random(ch / 4, ch / 2)));
+                    limiterTick = 0;
+                } else { limiterTick++; }
+            }
+        }
+
+        canvas.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            fireworks.push(new Firework(cw / 2, ch, e.clientX, e.clientY));
+            fireworks.push(new Firework(cw / 2, ch, e.clientX + 30, e.clientY + 30));
+            fireworks.push(new Firework(cw / 2, ch, e.clientX - 30, e.clientY + 30));
+        });
+
+        canvas.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            for (let i = 0; i < e.touches.length; i++) {
+                fireworks.push(new Firework(cw / 2, ch, e.touches[i].clientX, e.touches[i].clientY));
+            }
+        });
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                clearInterval(timerInterval);
+                isNewYear = true;
+
+                // --- KÍCH HOẠT HIỆU ỨNG GIAO THỪA ---
+                labelEl.innerHTML = "HOÀNG CHÚC MỪNG NĂM MỚI NHO";
+                labelEl.className = "hoang-special-text"; // Thêm class cầu vồng
+
+                timerEl.innerHTML = "2026";
+                container.classList.add("gold-mode");
+
+                wishEl.innerHTML = "An Khang Thịnh Vượng - Vạn Sự Như Ý<br>Hạnh phúc đong đầy - Tương lai rực rỡ!";
+                wishEl.classList.add('show-wish');
+
+                for (let k = 0; k < 20; k++) {
+                    setTimeout(() => {
+                        fireworks.push(new Firework(cw / 2, ch, random(0, cw), random(0, ch / 3)));
+                    }, k * 100);
+                }
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const h = hours < 10 ? "0" + hours : hours;
+            const m = minutes < 10 ? "0" + minutes : minutes;
+            const s = seconds < 10 ? "0" + seconds : seconds;
+
+            if (days > 0) {
+                timerEl.innerHTML = `${days} ngày ${h}:${m}:${s}`;
+            } else {
+                timerEl.innerHTML = `${h}:${m}:${s}`;
+            }
+        }
+
+        timerInterval = setInterval(updateCountdown, 1000);
+        updateCountdown();
+        loop();
+
+    </script>
+</body>
+
+</html>
